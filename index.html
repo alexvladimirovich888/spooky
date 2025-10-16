@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spooky Story Chain — Halloween Community Story</title>
+  <style>
+    :root{--bg:#0b0b12;--card:#111;--accent:#ff6b35;--muted:#c7c7c7}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;color:var(--muted);background:radial-gradient(circle at 10% 10%, #1a0f23 0%, var(--bg) 50%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .wrap{width:100%;max-width:960px}
+    header{display:flex;gap:16px;align-items:center;margin-bottom:18px}
+    .logo{width:84px;height:84px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(180deg,#2b0b1b,#1b0010);box-shadow:0 6px 30px rgba(0,0,0,.6),inset 0 -6px 16px rgba(0,0,0,.4)}
+    .logo svg{width:60px;height:60px}
+    h1{margin:0;font-size:20px;color:#fff}
+    p.lead{margin:6px 0 0;color:#d3c7d8}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
+    @media (max-width:880px){.grid{grid-template-columns:1fr} .logo{width:64px;height:64px}}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.05));padding:18px;border-radius:14px;box-shadow:0 8px 30px rgba(2,2,6,.6);border:1px solid rgba(255,255,255,0.03)}
+    .composer{display:flex;flex-direction:column;gap:10px}
+    label{font-size:13px;color:#f0c6ff}
+    input[type=text],textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);outline:none}
+    textarea{min-height:84px;resize:vertical}
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    button{background:linear-gradient(180deg,var(--accent),#ff3e00);color:#111;border:none;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600}
+    button.ghost{background:transparent;border:1px dashed rgba(255,255,255,0.06);color:var(--muted);padding:8px 10px}
+    .stories{display:flex;flex-direction:column;gap:10px}
+    .story{padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.03));border:1px solid rgba(255,255,255,0.02);display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+    .story .left{max-width:82%}
+    .meta{font-size:12px;color:#9a7b9b}
+    .who{font-weight:700;color:#ffd7b3}
+    .time{font-size:11px;color:#9b8aa2}
+    .right{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+    .sharelink{font-size:11px;color:#bfb2c7}
+    footer{margin-top:14px;font-size:13px;color:#bfb2c7}
+    .bat{position:absolute;mix-blend-mode:screen;opacity:.9;animation:fly 9s linear infinite}
+    .bat.s1{left:6%;top:8%;transform:scale(.8);animation-duration:10s}
+    .bat.s2{right:12%;top:6%;transform:scale(.6);animation-duration:12s}
+    .bat.s3{left:40%;top:2%;transform:scale(.5);animation-duration:8s}
+    @keyframes fly{0%{transform:translateY(0) rotate(0)}50%{transform:translateY(-24px) rotate(6deg)}100%{transform:translateY(0) rotate(0)}}
+  </style>
+</head>
+<body>
+  <div class="bat s1">🦇</div>
+  <div class="bat s2">🦇</div>
+  <div class="bat s3">🦇</div>
+  <div class="wrap">
+    <header>
+      <div class="logo"><svg viewBox="0 0 64 64"><circle cx="32" cy="34" r="20" fill="#ff6b35"/></svg></div>
+      <div>
+        <h1>Spooky Story Chain</h1>
+        <p class="lead">Add one line to the Halloween community story and share it with others!</p>
+      </div>
+    </header>
+    <div class="grid">
+      <main class="card">
+        <section class="composer">
+          <label for="author">Your name or nickname</label>
+          <input id="author" type="text" placeholder="Ghost from the basement" maxlength="30" />
+          <label for="text">Your spooky line (max 200 chars)</label>
+          <textarea id="text" placeholder="For example: On that misty evening, the bells rang one time too long..." maxlength="200"></textarea>
+          <div class="controls">
+            <button id="submit">Add to chain</button>
+            <button class="ghost" id="random">Generate random line</button>
+            <button class="ghost" id="export">Export .json</button>
+            <label class="ghost" style="cursor:pointer;padding:8px;border-radius:8px"><input id="import-file" type="file" accept="application/json" style="display:none">Import</label>
+          </div>
+        </section>
+        <hr style="border:none;height:8px">
+        <section>
+          <h3 style="color:#fff;margin:0 0 8px 0">Current Chain</h3>
+          <div id="stories" class="stories"></div>
+        </section>
+      </main>
+      <aside class="card">
+        <h3 style="color:#fff;margin-top:0">How the community plays</h3>
+        <ol style="padding-left:18px;color:#d6c7d8">
+          <li>Each person adds one spooky line.</li>
+          <li>Share your unique hash‑link.</li>
+          <li>Someone exports the story and submits it via Pull Request to the main repo.</li>
+        </ol>
+      </aside>
+    </div>
+  </div>
+  <script>
+    const LS_KEY='spooky_chain_en';
+    const maxKeep=200;
+    function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+    function nowIso(){return new Date().toISOString()}
+    function load(){try{return JSON.parse(localStorage.getItem(LS_KEY))||[]}catch{return[]}}
+    function save(a){localStorage.setItem(LS_KEY,JSON.stringify(a.slice(-maxKeep)))}
+    let stories=load();
+    const storiesEl=document.getElementById('stories');
+    const authorEl=document.getElementById('author');
+    const textEl=document.getElementById('text');
+    function render(){storiesEl.innerHTML='';if(!stories.length){storiesEl.innerHTML='<div style="color:#9b86a1">Empty — be the first to write!</div>';return}for(let s of stories.slice().reverse()){let d=document.createElement('div');d.className='story';d.innerHTML=`<div class=left><div style=color:#fff>${escapeHtml(s.text)}</div><div class=meta><span class=who>${escapeHtml(s.author||'Anonymous')}</span> · <span class=time>${new Date(s.date).toLocaleString()}</span></div></div>`;storiesEl.appendChild(d)}};
+    function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]))}
+    document.getElementById('submit').onclick=()=>{const text=textEl.value.trim();if(!text)return alert('Type your line');const author=authorEl.value.trim()||'Anonymous';stories.push({id:uid(),author,text,date:nowIso()});save(stories);render();textEl.value=''};
+    document.getElementById('random').onclick=()=>{const arr=['The streetlight flickered twice... then stayed off.','A whisper crawled through the vents.','My reflection grinned before I did.','The jack-o-lantern blinked.'];textEl.value=arr[Math.floor(Math.random()*arr.length)];};
+    document.getElementById('export').onclick=()=>{const blob=new Blob([JSON.stringify(stories,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='spooky_story_chain.json';a.click();URL.revokeObjectURL(a.href);};
+    render();
+  </script>
+</body>
+</html>
